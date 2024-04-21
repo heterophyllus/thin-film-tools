@@ -1,7 +1,7 @@
-# F-CUBE
+# Python Thin Film Tools
 
 ## Overview
-"F-CUBE" is a <u>**f**</u>ree python module for <u>**f**</u>lexible simulation of optical thin <u>**f**</u>ilm coating.
+This repository develops python module for optical thin film caoting simulation.
 
 ## Getting Started
 ### Prebuilt Binary
