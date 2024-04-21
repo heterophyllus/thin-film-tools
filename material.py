@@ -59,8 +59,10 @@ class MaterialLibrary:
     This class manages materials for thin films.
     The materials are defined in MATE format that is used in Zemax.
     """
-    def __init__(self) -> None:
+    def __init__(self, dat_file_path:str ="") -> None:
         self.materials = []
+        if dat_file_path != "":
+            self.load_dat_file(dat_file_path)
 
     def get_material_name_list(self) -> list:
         """
@@ -77,6 +79,8 @@ class MaterialLibrary:
         for m in self.materials:
             if name == m.name:
                 return m
+        
+        print("Not found material: " + name)
         return None
 
     def load_dat_file(self, filepath:str) -> None:

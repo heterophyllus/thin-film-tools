@@ -55,6 +55,7 @@ class LayerStackEditor(wx.grid.Grid):
     def insert_row(self, row:int):
         self.InsertRows(row)
         self.set_row_property(row)
+        self.Parent.Parent.update_ui()
 
 
     def set_row_property(self, row:int):

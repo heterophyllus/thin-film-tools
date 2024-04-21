@@ -10,22 +10,18 @@ class Layer():
     def __init__(self, mat=None, t=0.0) -> None:
         self.thickness = t
         self.material  = mat
-        self.sin_theta = complex(0.0,0.0)
-
-    @property
-    def cos_theta(self):
-        return np.sqrt(1 - self.sin_theta**2)
+        self.theta     = complex(0.0,0.0) # angle in radian
 
     def delta(self, wavelength:float):
         N = self.material.complex_refractive_index(wavelength)
-        return 2*np.pi*N*self.thickness*self.cos_theta/wavelength
+        return 2*np.pi*N*self.thickness*np.cos(self.theta)/wavelength
 
     def eta(self, polarize:str, wavelength:float):
         N = self.material.complex_refractive_index(wavelength)
         if polarize == 'p':
-            return N/self.cos_theta
+            return N/np.cos(self.theta)
         elif polarize == 's':
-            return N*self.cos_theta
+            return N*np.cos(self.theta)
         else:
             raise ValueError("Polalization must be 'p' or 's'")
         
@@ -40,14 +36,19 @@ class Layer():
         M[1][1] = np.cos(delta)
         return M
 
+
+class Substrate:
+    def __init__(self) -> None:
+        self.theta = complex(0.0, 0.0) #angle in radian
+        self.material:Glass = None
+
 class LayerStackModel:
     """ Layer stack model
         Air, 0, 1, 2 ... ,n, Substrate 
     """
     
     def __init__(self) -> None:
-        
-        self.substrate:Glass = None
+        self.substrate       = Substrate()
         self.ambient         = Air()
         self.layers          = []
         self.__wavelength:float     = 0.55
@@ -91,10 +92,9 @@ class LayerStackModel:
         with open(json_file_path, 'w') as f:
             json.dump(self, f, indent=4)
 
-
     def set_layers(self, material_and_thickness:list):
         self.layers.clear
-        for mat, t in material_and_thickness:
+        for mat,t in material_and_thickness:
             self.layers.append(Layer(mat, t))
 
         self.update()
@@ -106,9 +106,16 @@ class LayerStackModel:
         for current_layer in self.layers:
             nr = current_layer.material.complex_refractive_index(wavelength)
             sin_theta_r = (ni/nr)*sin_theta_i
-            current_layer.sin_theta = sin_theta_r
+            current_layer.theta = np.arcsin(sin_theta_r)
             sin_theta_i = sin_theta_r
             ni = nr
+        
+        # substrate
+        last_layer_sin_theta = sin_theta_r
+        nr = self.substrate.material.complex_refractive_index(wavelength)
+        subs_sin_theta = (ni/nr)*last_layer_sin_theta
+        self.substrate.theta = np.arcsin(subs_sin_theta)
+        
 
     def characteristic_matrix(self, polarize:str):
         wavelength = self.__wavelength
@@ -120,15 +127,24 @@ class LayerStackModel:
 
     def amplitude_coefficients(self, polarize:str):
         M = self.characteristic_matrix(polarize)
-        Nsubs = self.substrate.complex_refractive_index(self.wavelength)
+        Nsubs = self.substrate.material.complex_refractive_index(self.wavelength)
         eta_subs = Nsubs
+        if polarize == 'p':
+            eta_subs = Nsubs/np.cos(self.__incident_angle)
+        elif polarize == 's':
+            eta_subs = Nsubs * np.cos(self.__incident_angle)
         S = np.array([1, eta_subs])
         BC = M @ S
         B = BC[0]
         C = BC[1]
 
-        #eta_amb = self.ambient.eta()
-        eta_amb = self.ambient.complex_refractive_index(self.wavelength)
+        Namb = self.ambient.complex_refractive_index(self.wavelength)
+        eta_amb = Namb
+        if polarize == 'p':
+            eta_amb = Namb / np.cos(self.__incident_angle)
+        elif polarize == 's':
+            eta_amb = Namb * np.cos(self.__incident_angle)
+
         rho = (eta_amb*B - C) / (eta_amb*B + C)
         tau = (2*eta_amb) / (eta_amb*B + C)
         return rho, tau

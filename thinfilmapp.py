@@ -18,37 +18,40 @@ class Window(wx.Frame):
         self.Show(True)
     
     def init_panel(self):
-        panel = wx.Panel(self, wx.ID_ANY)
+        self.panel = wx.Panel(self, wx.ID_ANY)
         self.Fit()
-        sizer = wx.GridBagSizer(0,0)
+        self.sizer = wx.GridBagSizer(0,0)
  
         # note
-        text_note = wx.StaticText(panel, label = "Notes:") 
-        sizer.Add(text_note, pos = (0, 0), flag = wx.ALL, border = 5) 
-        self.textctrl_note = wx.TextCtrl(panel,style = wx.TE_MULTILINE) 
-        sizer.Add(self.textctrl_note, pos = (0,1), span = (1, 2), flag = wx.EXPAND|wx.ALL, border = 5) 
+        text_note = wx.StaticText(self.panel, label = "Notes:") 
+        self.sizer.Add(text_note, pos = (0, 0), flag = wx.ALL, border = 5) 
+        self.textctrl_note = wx.TextCtrl(self.panel,style = wx.TE_MULTILINE) 
+        self.sizer.Add(self.textctrl_note, pos = (0,1), span = (1, 2), flag = wx.EXPAND|wx.ALL, border = 5) 
         
         # reference wavelength
-        text_ref_wave = wx.StaticText(panel, label = "Reference Wavelength:") 
-        sizer.Add(text_ref_wave, pos = (1, 0), flag = wx.ALL, border = 5) 
-        self.textctrl_wave = FloatCtrl(panel)
+        text_ref_wave = wx.StaticText(self.panel, label = "Reference Wavelength:") 
+        self.sizer.Add(text_ref_wave, pos = (1, 0), flag = wx.ALL, border = 5) 
+        self.textctrl_wave = FloatCtrl(self.panel)
         self.textctrl_wave.Bind(wx.EVT_TEXT, self.on_wavelength_changed)
-        sizer.Add(self.textctrl_wave,pos=(1,1), border = 5)
+        self.sizer.Add(self.textctrl_wave,pos=(1,1), border = 5)
 
         # table
-        self.layer_editor = LayerStackEditor(panel,self.thin_film_project)
-        sizer.Add(self.layer_editor, pos=(2,0), span = (1, 2), flag = wx.EXPAND|wx.ALL, border = 5)
+        self.layer_editor = LayerStackEditor(self.panel,self.thin_film_project)
+        self.sizer.Add(self.layer_editor, pos=(2,0), span = (1, 2), flag = wx.EXPAND|wx.ALL, border = 20)
 
         # substrate
-        text_substrate = wx.StaticText(panel, label = "Substrate:") 
-        sizer.Add(text_substrate, pos = (3, 0), flag = wx.ALL, border = 5) 
-        self.choice_substrate = wx.Choice(panel, -1, choices= self.thin_film_project.glass_lib.glass_name_list())
+        text_substrate = wx.StaticText(self.panel, label = "Substrate:") 
+        self.sizer.Add(text_substrate, pos = (3, 0), flag = wx.ALL, border = 5) 
+        self.choice_substrate = wx.Choice(self.panel, -1, choices= self.thin_film_project.glass_lib.glass_name_list())
         self.choice_substrate.SetSelection(0)
-        sizer.Add(self.choice_substrate, pos=(3,1), border = 5)
+        self.sizer.Add(self.choice_substrate, pos=(3,1), border = 5)
 
-        panel.SetSizerAndFit(sizer)
+        self.panel.SetSizerAndFit(self.sizer)
         self.Fit()
-        
+    
+    def update_ui(self):
+        self.panel.SetSizerAndFit(self.sizer)
+        self.Fit()
 
     def init_menu(self):
         menu_bar = wx.MenuBar()
